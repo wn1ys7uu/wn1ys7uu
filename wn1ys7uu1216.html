@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title></title>
+	<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1, user-scalable=no">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<style type="text/css">
+		#clip-value {
+			position: absolute;
+			top: -999px;
+		}
+		#copy-btn {
+			display: none;
+			background: #0c84ff;
+		    color: #FFF;
+		    font-size: 28px;
+		}
+		.nun-ul {
+			list-style-type: decimal;
+		}
+	</style>
+</head>
+<body>
+	<h2>操作步骤</h2>
+	<ul class="nun-ul">
+		<li>
+			点击一下的拷贝按钮复制链接
+		</li>
+		<li id="step2">
+			
+		</li>
+	</ul>
+	<!-- clipboard copy start -->
+	<input type="text" id="clip-value" name="clip" value="here is the url you wanna copy">
+	<button id="copy-btn" data-clipboard-target="#clip-value" alt="点击此按钮拷贝">
+		点击此处拷贝 
+	</button>
+	<!-- clipboard copy end -->
+</body>
+<!-- <img src=""> -->
+<script src="https://cdnnext.oss-cn-hangzhou.aliyuncs.com/js/lib/clipboard.min.js"></script>
+<script type="text/javascript">
+
+	/**
+	 * query string 参数
+	 * next : 复制链接
+	 * nhs  : 1/true:隐藏分享，false/undefine:允许分享
+	 * plug : 阻塞文件地址
+	 */
+	
+	(function(){
+
+		// exchange url query to boject
+		function queryToObj (queryStr) {
+		    queryStr = decodeURIComponent(queryStr);
+		    var queryArr = queryStr.match(new RegExp("[^\?\&\#]+=[^\?\&\#]+","g"));
+		    var resObj = {};
+		    if (!queryArr){
+		        return resObj;
+		    }
+		    for(var i=0; i<queryArr.length; i++){
+		        var tmpArr = queryArr[i].split('=');
+		        tmpArr[0] = tmpArr[0].replace(/^(&|\?)(.)/g, '$2');
+		        if( tmpArr[1].length>=1 ){ // length 大于1 表示=号后存在参数
+		            if(!resObj[tmpArr[0]]){
+		                resObj[tmpArr[0]] = tmpArr[1];
+		            } else if( Object.prototype.toString.call( resObj[tmpArr[0]] )=='[object Array]' ) {
+		                resObj[tmpArr[0]].push(tmpArr[1]);
+		            } else {
+		                resObj[tmpArr[0]] = [ resObj[tmpArr[0]] ];
+		                resObj[tmpArr[0]].push(tmpArr[1]);
+		            }
+		        }
+		    }
+		    return resObj;
+		};
+
+		// 判断是否为微信
+		function isWeiXin(){
+			var ua = window.navigator.userAgent.toLowerCase();
+			if(ua.match(/MicroMessenger/i) == 'micromessenger'){
+				return true;
+			}else{
+				return false;
+			}
+		}
+
+		// js 热加载
+		function loadScript(path, callback) {
+			var url = path;
+			var script = document.createElement("script");
+			script.type = "text/javascript";
+			script.charset = "utf-8";
+			if(typeof(callback) != "undefined"){
+				if (script.readyState) {
+					script.onreadystatechange = function () {
+						if (script.readyState == "loaded" || script.readyState == "complete") {
+							script.onreadystatechange = null;
+							callback();
+						}
+					};
+				} else {
+					script.onload = function () {
+						callback();
+					};
+				}
+			}
+			script.src = url;
+			document.body.appendChild(script);
+		}
+
+		// 浏览器环境信息
+		var browser = {
+			versions : function() {
+				var u = navigator.userAgent, app = navigator.appVersion;
+				return {//移动终端浏览器版本信息
+					trident : u.indexOf('Trident') > -1,		//IE内核
+					presto : u.indexOf('Presto') > -1,		//opera内核
+					webKit : u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+					gecko : u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+					mobile : !!u.match(/AppleWebKit.*Mobile.*/)
+					 || !!u.match(/AppleWebKit/),			//是否为移动终端
+					ios : !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+					android : u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+					iPhone : u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者QQHD浏览器
+					iPad: u.indexOf('iPad') > -1, //是否iPad
+					webApp : u.indexOf('Safari') == -1, //是否web应该程序，没有头部与底部
+　　 				google:u.indexOf('Chrome')>-1
+　　 			};
+　　 		}(),
+　　			language : (navigator.browserLanguage || navigator.language).toLowerCase()
+　　		}
+
+		// 仅在微信浏览器下执行开关 
+		// if(!isWeiXin) {
+		// 	return;
+		// }
+		var queryObj = queryToObj(encodeURIComponent(window.location.href));
+		var domCopyBtn = document.getElementById("copy-btn");
+		var domCopyInp = document.getElementById("clip-value");
+		console.log(queryObj)
+		if(!!queryObj.next) {
+			domCopyInp.value = decodeURIComponent(queryObj.next);
+			new ClipboardJS('#copy-btn');
+			domCopyBtn.style.display = "block";
+			domCopyBtn.addEventListener("click",function(){
+				alert("已复制,进行粘贴");
+			})
+		}
+
+		if(isWeiXin() && (!queryObj.nhs)) {
+			loadScript("https://cdnnext.oss-cn-hangzhou.aliyuncs.com/js/lib/hide-share.js");
+		}
+
+		if(isWeiXin() && (browser.versions.iPad || browser.versions.iPhone || browser.versions.ios) ) {
+			var tImgDom = document.createElement("img");
+			tImgDom.src = !!queryObj.plug ? queryObj.plug : "http://bigpic1.u9if.cn/bigpic.png";
+			tImgDom.style.display = "none";
+			document.body.appendChild(tImgDom);
+		}
+
+		if(isWeiXin()){
+			var step2 = "关闭微信，打开浏览器，粘贴并且打开";
+		}else{
+			var step2 = "关闭浏览器，打开微信，粘贴并且打开";
+		}
+
+		document.getElementById("step2").innerHTML = step2;
+
+	})()
+
+</script>
+</html>
